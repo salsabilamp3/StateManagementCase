@@ -1,0 +1,4 @@
+include:
+  - project: 'playground/knowledge-management/example/cicd-config'
+    ref: main
+    file: 'ci-node.yml'
