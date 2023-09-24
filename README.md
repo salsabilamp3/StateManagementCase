@@ -2,23 +2,7 @@
 
 ![Technology](https://img.shields.io/badge/Technology-React.js-blue)
 
-## `Getting started`
-
-Install dependencies
-
-```bash
-  npm install
-```
-
-Start the server
-
-```bash
-  npm run start
-```
-
-## `Case Study`
-
-## 1. Show All Selected User Information on Detail Page (State Management)
+# Show All Selected User Information on Detail Page (State Management)
 State management berfungsi untuk me-manage state terpusat untuk memanipulasi dan mengelola state sesuai kebutuhan.
 ![Difficulty](https://img.shields.io/badge/Difficulty-Easy-green)
 
@@ -30,41 +14,67 @@ DoD
 
 > Pada `Page User Detail` seluruh `Informasi User` yang sudah di `Checklist` pada halaman user, dapat ditampilkan semuanya.
 
-## 2. Unauthorized Handling (Exception Handling)
-Exception handling berfungsi untuk menangani kesalahan atau error yang terjadi pada aplikasi, dengan menggunakan mekanisme tertentu.
-![Difficulty](https://img.shields.io/badge/Difficulty-Easy-green)
+# Solusi Penyelesaian
+### 1. Menambahkan properties di UserListToolbar
+Pada UserListBar ditambahkan properties dataSelected yang berupa array. dataSelected didapatkan dari UserPage.js yang merupakan array berisi name yang dipilih (checked pada checkbox)
+```javascript
+UserListToolbar.propTypes = {
+  numSelected: PropTypes.number,
+  dataSelected: PropTypes.array,
+  filterName: PropTypes.string,
+  onFilterName: PropTypes.func,
+};
+...
+navigate('/dashboard/user-detail', { state: { dataSelected } });
+```
 
-Problem
+### 2. Menampilkan Detail Selected Data 
+Pada UserPageDetail, state dataSelected dicocokkan dengan data user dari USERLIST untuk mendapatkan detail data yang lainnya dan ditampilkan.
+```javascript
+const location = useLocation();
+  const { dataSelected } = location.state;
+  const matchingUsers = [];
 
-> Pada Screen Blog terdapat request Rest API dengan return error yaitu response `Status Code 404`.
+  // matching dataSelected with USERLIST
+  dataSelected.forEach((data) => {
+    USERLIST.forEach((user) => {
+      if (user.name === data) {
+        matchingUsers.push(user);
+      }
+    });
+  });
+```
 
-DoD
+### 3. Menyimpan array selected 
+Untuk menjaga agar data selected di User Page, array dari data selected disimpan di local storage agar ketika go back data selected tetap ada.
+ ```javascript
+  ...
+  localStorage.setItem('selected', JSON.stringify(newSelected));
+useEffect(() => {
+    const savedSelected = JSON.parse(localStorage.getItem('selected'));
 
-> Buatkan handling terpusat ketika terdapat error response yang menghasilkan `Status Code 404` agar dapat di `Logout` atau di navigate ke login awal secara otomatis.
+    if (savedSelected) {
+      setSelected(savedSelected);
+    }
+  }, []);
 
-Notes: Karena menggunakan Rest API Dummy, asumsikan `Status Code 404` tersebut menjadi seperti `Status Code 401`. Pada real case seharusnya status code yang biasanya dibutuhkan untuk handling hal tersebut adalah `401 (Unauthorized)`.
+   // Tambahkan useEffect untuk mereset penyimpanan saat halaman di-refresh
+   useEffect(() => {
+    window.addEventListener('beforeunload', () => {
+      // Hapus status pemilihan dan pengurutan dari localStorage saat halaman di-refresh
+      localStorage.removeItem('selected');
+    });
 
-## 3. List of Product Not Showing Up (Async/Await)
-Async/Await berfungsi sebagai pengelola operasi sekuensial untuk membantu dalam eksekusi permintaan / request pada promise / rest api
-![Difficulty](https://img.shields.io/badge/Difficulty-Easy-green)
+    return () => {
+      window.removeEventListener('beforeunload', () => {
+        // Hapus status pemilihan dan pengurutan dari localStorage saat halaman di-refresh
+        localStorage.removeItem('selected');
+      });
+    };
+  }, []);
+```
 
-Problem
+# Hasil
+![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/255046b6-fdec-405c-9d14-7dbdb5c998f5)
 
-> Pada Halaman Product meskipun request Rest API `Success` dan mapping data product sudah benar, tetapi daftar product tersebut masih belum ditampilkan pada halaman `Product`.
-
-DoD
-
-> Menampilkan daftar Product beserta informasinya, dan juga dapat memahami penyebab masalah tersebut. 
-
-## 4. The Version of Application is not Updated After Deployment (Cache)
-Cache berfungsi sebagai penyimpanan sementara data atau informasi di komputer pengguna atau server aplikasi web
-![Difficulty](https://img.shields.io/badge/Difficulty-Easy-green)
-
-Problem
-
-> Pada saat setiap kali deployment aplikasi, aplikasi yang sudah terdeploy tersebut tidak terupdate otomatis dan perlu dilakukan clear cache manual setiap selesai melakukan deployment.
-
-DoD
-
-> Aplikasi yang sudah di deploy tersebut dapat langsung diakses tanpa perlu di clear cache. 
-# StateManagementCase
+![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/21494a07-fbbd-4a07-89e4-b2bcca0cee0b)
