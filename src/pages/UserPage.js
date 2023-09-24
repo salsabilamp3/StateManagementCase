@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
-import { useEffect, useState } from 'react';
-// @mui
+import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Card,
   Table,
@@ -22,14 +22,14 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
+import { toggleUserSelection } from '../redux/reducers/users';
+// @mui
 // components
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // sections
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
-// mock
-import USERLIST from '../_mock/user';
 
 // ----------------------------------------------------------------------
 
@@ -73,13 +73,15 @@ function applySortFilter(array, comparator, query) {
 }
 
 export default function UserPage() {
+  const users = useSelector((state) => state.user.users);
+  const selectedUsers = useSelector((state) => state.user.selectedUsers);
+  const dispatch = useDispatch();
+
   const [open, setOpen] = useState(null);
 
   const [page, setPage] = useState(0);
 
   const [order, setOrder] = useState('asc');
-
-  const [selected, setSelected] = useState([]);
 
   const [orderBy, setOrderBy] = useState('name');
 
@@ -103,52 +105,28 @@ export default function UserPage() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
-      setSelected(newSelecteds);
+      const newSelecteds = users.map((n) => n.name);
+      dispatch(toggleUserSelection(newSelecteds));
       localStorage.setItem('selected', JSON.stringify(newSelecteds));
       return;
     }
-    setSelected([]);
+    dispatch(toggleUserSelection([]));
   };
 
   const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+    const selectedIndex = selectedUsers.indexOf(name);
     let newSelected = [];
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selectedUsers, name);
     } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
+      newSelected = newSelected.concat(selectedUsers.slice(1));
+    } else if (selectedIndex === selectedUsers.length - 1) {
+      newSelected = newSelected.concat(selectedUsers.slice(0, -1));
     } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+      newSelected = newSelected.concat(selectedUsers.slice(0, selectedIndex), selectedUsers.slice(selectedIndex + 1));
     }
-    setSelected(newSelected);
-    localStorage.setItem('selected', JSON.stringify(newSelected));
+    dispatch(toggleUserSelection(newSelected));
   };
-
-  useEffect(() => {
-    const savedSelected = JSON.parse(localStorage.getItem('selected'));
-
-    if (savedSelected) {
-      setSelected(savedSelected);
-    }
-  }, []);
-
-   // Tambahkan useEffect untuk mereset penyimpanan saat halaman di-refresh
-   useEffect(() => {
-    window.addEventListener('beforeunload', () => {
-      // Hapus status pemilihan dan pengurutan dari localStorage saat halaman di-refresh
-      localStorage.removeItem('selected');
-    });
-
-    return () => {
-      window.removeEventListener('beforeunload', () => {
-        // Hapus status pemilihan dan pengurutan dari localStorage saat halaman di-refresh
-        localStorage.removeItem('selected');
-      });
-    };
-  }, []);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -164,9 +142,9 @@ export default function UserPage() {
     setFilterName(event.target.value);
   };
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
 
-  const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
+  const filteredUsers = applySortFilter(users, getComparator(order, orderBy), filterName);
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
@@ -188,8 +166,7 @@ export default function UserPage() {
 
         <Card>
           <UserListToolbar 
-            numSelected={selected.length} 
-            dataSelected={selected}
+            numSelected={selectedUsers.length} 
             filterName={filterName} 
             onFilterName={handleFilterByName
             } />
@@ -201,15 +178,15 @@ export default function UserPage() {
                   order={order}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
-                  rowCount={USERLIST.length}
-                  numSelected={selected.length}
+                  rowCount={users.length}
+                  numSelected={selectedUsers.length}
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
                 <TableBody>
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                     const { id, name, role, status, avatarUrl, isVerified } = row;
-                    const selectedUser = selected.indexOf(name) !== -1;
+                    const selectedUser = selectedUsers.indexOf(name) !== -1;
 
                     return (
                       <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
@@ -279,7 +256,7 @@ export default function UserPage() {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={USERLIST.length}
+            count={users.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}

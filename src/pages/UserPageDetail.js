@@ -1,7 +1,7 @@
-import { useLocation} from 'react-router-dom';
 import { useState } from 'react';
 import { sentenceCase } from 'change-case';
 import { Helmet } from 'react-helmet-async';
+import { useSelector, useDispatch } from 'react-redux';
 // @mui
 import {
   Card,
@@ -17,6 +17,7 @@ import {
   TableContainer,
   TablePagination,
 } from '@mui/material';
+import { deleteUser } from '../redux/reducers/users';
 // components
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -47,21 +48,22 @@ export default function UserPageDetail() {
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const location = useLocation();
-  const { dataSelected } = location.state;
+  const selectedUsers = useSelector((state) => state.user.selectedUsers);
+  const users = useSelector((state) => state.user.users);
+  const dispatch = useDispatch();
   const matchingUsers = [];
 
   // matching dataSelected with USERLIST
-  dataSelected.forEach((data) => {
-    USERLIST.forEach((user) => {
+  selectedUsers.forEach((data) => {
+    users.forEach((user) => {
       if (user.name === data) {
         matchingUsers.push(user);
       }
     });
   });
 
-  const handleDeleteUser = () => {
-    
+  const handleDeleteUser = (name) => {
+    dispatch(deleteUser(name));
   };
 
   const handleRequestSort = (event, property) => {
@@ -140,7 +142,7 @@ export default function UserPageDetail() {
                         </TableCell>
 
                         <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={handleDeleteUser(name)}>
+                          <IconButton size="large" color="inherit" onClick={() => handleDeleteUser(name)}>
                             <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
                           </IconButton>
                         </TableCell>

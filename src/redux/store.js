@@ -1,11 +1,13 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistStore } from 'redux-persist';
 
 import authReducer from './reducers/auth';
+import userReducer from './reducers/users';
 
-const rootReducer = {
+const rootReducer = combineReducers({ 
   auth: authReducer,
-};
+  user: userReducer,
+});
 
 const store = configureStore({
   reducer: rootReducer,

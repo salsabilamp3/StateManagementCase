@@ -35,16 +35,15 @@ const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
 
 UserListToolbar.propTypes = {
   numSelected: PropTypes.number,
-  dataSelected: PropTypes.array,
   filterName: PropTypes.string,
   onFilterName: PropTypes.func,
 };
 
-export default function UserListToolbar({ numSelected, dataSelected, filterName, onFilterName }) {
+export default function UserListToolbar({ numSelected, filterName, onFilterName }) {
   const navigate = useNavigate();
 
   const navigateToUserDetail = () => {
-    navigate('/dashboard/user-detail', { state: { dataSelected } });
+    navigate('/dashboard/user-detail');
   };
 
   return (
