@@ -4,7 +4,7 @@ import storageSession from 'redux-persist/lib/storage/session';
 import USERLIST from '../../_mock/user';
 
 const initialState = {
-    users: USERLIST, // Anda perlu memasukkan data pengguna dari mock
+    users: USERLIST,
     selectedUsers: [],
 };
 
