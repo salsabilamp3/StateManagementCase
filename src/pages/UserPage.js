@@ -107,7 +107,6 @@ export default function UserPage() {
     if (event.target.checked) {
       const newSelecteds = users.map((n) => n.name);
       dispatch(toggleUserSelection(newSelecteds));
-      localStorage.setItem('selected', JSON.stringify(newSelecteds));
       return;
     }
     dispatch(toggleUserSelection([]));

@@ -53,7 +53,6 @@ export default function UserPageDetail() {
   const dispatch = useDispatch();
   const matchingUsers = [];
 
-  // matching dataSelected with USERLIST
   selectedUsers.forEach((data) => {
     users.forEach((user) => {
       if (user.name === data) {
