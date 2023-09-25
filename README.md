@@ -15,29 +15,78 @@ DoD
 > Pada `Page User Detail` seluruh `Informasi User` yang sudah di `Checklist` pada halaman user, dapat ditampilkan semuanya.
 
 # Solusi Penyelesaian
-### 1. Menambahkan properties di UserListToolbar
-Pada UserListBar ditambahkan properties dataSelected yang berupa array. dataSelected didapatkan dari UserPage.js yang merupakan array berisi name yang dipilih (checked pada checkbox)
+### 1. Menambahkan Reducer
+Membuat reducer untuk list users dan selected users dengan menambahkan file users.js di folder reducer agar state bisa diakses secara global.
 ```javascript
-UserListToolbar.propTypes = {
-  numSelected: PropTypes.number,
-  dataSelected: PropTypes.array,
-  filterName: PropTypes.string,
-  onFilterName: PropTypes.func,
+const initialState = {
+    users: USERLIST,
+    selectedUsers: [],
 };
-...
-navigate('/dashboard/user-detail', { state: { dataSelected } });
+
+const userSlice = createSlice({
+    name: 'user',
+    initialState,
+    reducers: {
+        toggleUserSelection: (state, action) => {
+            const newSelected = action.payload;
+            state.selectedUsers = newSelected;
+        },                   
+        deleteUser: (state, action) => {
+            const nameToDelete = action.payload;
+            state.users = state.users.filter((user) => user.name !== nameToDelete);
+            state.selectedUsers = state.selectedUsers.filter((user) => user !== nameToDelete);
+        },          
+    },
+});
+
+const persistConfig = {
+    key: 'user',
+    storage: storageSession,
+    whitelist: ['users', 'selectedUsers'],
+};
 ```
 
-### 2. Menampilkan Detail Selected Data 
-Pada UserPageDetail, state dataSelected dicocokkan dengan data user dari USERLIST untuk mendapatkan detail data yang lainnya dan ditampilkan.
+### 2. Menambahkan reducers users di store.js 
+Reducer users ditambahkan pada store agar bisa diakses di semua komponen
 ```javascript
-const location = useLocation();
-  const { dataSelected } = location.state;
+const rootReducer = combineReducers({ 
+  auth: authReducer,
+  user: userReducer,
+});
+```
+
+### 3. Membaca data dengan useSelector di user page
+Pada user page perlu menampilkan list user dan bisa memilih data user dengan checkbox, list user dan selected user disimpan dalam state global dan bisa diakses dengan menggunakan useSelector.
+ ```javascript
+  const users = useSelector((state) => state.user.users);
+  const selectedUsers = useSelector((state) => state.user.selectedUsers);
+```
+
+### 4. Merubah state dengan useDispatch
+Pada user page, untuk merubah isi dari selected users digunakan useDispatch agar bisa mengakases action yang tersedia untuk merubah state yang sudah didefinisikan di reducer.
+```javascript
+const dispatch = useDispatch();
+...
+const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelecteds = users.map((n) => n.name);
+      dispatch(toggleUserSelection(newSelecteds));
+      return;
+    }
+    dispatch(toggleUserSelection([]));
+  };
+```
+
+### 5. Mengakses selected users di user page detail
+Sama seperti di user page, state users dan selected users diakses di user detail page dengan useSelector
+```javascript
+const selectedUsers = useSelector((state) => state.user.selectedUsers);
+  const users = useSelector((state) => state.user.users);
+  const dispatch = useDispatch();
   const matchingUsers = [];
 
-  // matching dataSelected with USERLIST
-  dataSelected.forEach((data) => {
-    USERLIST.forEach((user) => {
+  selectedUsers.forEach((data) => {
+    users.forEach((user) => {
       if (user.name === data) {
         matchingUsers.push(user);
       }
@@ -45,36 +94,23 @@ const location = useLocation();
   });
 ```
 
-### 3. Menyimpan array selected 
-Untuk menjaga agar data selected di User Page, array dari data selected disimpan di local storage agar ketika go back data selected tetap ada.
- ```javascript
-  ...
-  localStorage.setItem('selected', JSON.stringify(newSelected));
-useEffect(() => {
-    const savedSelected = JSON.parse(localStorage.getItem('selected'));
-
-    if (savedSelected) {
-      setSelected(savedSelected);
-    }
-  }, []);
-
-   // Tambahkan useEffect untuk mereset penyimpanan saat halaman di-refresh
-   useEffect(() => {
-    window.addEventListener('beforeunload', () => {
-      // Hapus status pemilihan dan pengurutan dari localStorage saat halaman di-refresh
-      localStorage.removeItem('selected');
-    });
-
-    return () => {
-      window.removeEventListener('beforeunload', () => {
-        // Hapus status pemilihan dan pengurutan dari localStorage saat halaman di-refresh
-        localStorage.removeItem('selected');
-      });
-    };
-  }, []);
+### 6. Menghapus data di user page detail
+Sama seperti select user di user page, untuk menghapus data sudah didefinisikan action-nya di reducer dan dipanggil di user page detail dengan bantuan useDispatch.
+```javascript
+const handleDeleteUser = (name) => {
+    dispatch(deleteUser(name));
+  };
 ```
 
 # Hasil
-![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/255046b6-fdec-405c-9d14-7dbdb5c998f5)
+#### 1. Select users
+![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/65ba4f17-cdc3-4b11-83d4-f08b2f0177f4)
 
-![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/21494a07-fbbd-4a07-89e4-b2bcca0cee0b)
+#### 2. Display selected user detail
+![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/48dc046b-8414-4430-a09f-21b6a265a21a)
+
+#### 3. Delete user in user detail page
+![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/240e2f3a-48dc-4a75-a047-4cbbb62ffc3b)
+
+#### 4. Go back page, 1 row deleted, the rest still selected
+![image](https://github.com/salsabilamp3/StateManagementCase/assets/95154453/133bbef4-f84c-4547-8dc7-4120554be48c)
